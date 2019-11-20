@@ -1,0 +1,31 @@
+---
+title: "TP_belief"
+author: "seb"
+date: "20/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("GA")
+library("class")
+```
+
+Q 1.1)
+
+Q 1.2)
+```{r}
+
+data_ecoli = read.table("ecoli.data",header = FALSE, sep = "")
+names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2', 'Class')
+
+class <- as.data.frame(table(data_ecoli$Class))
+data_ecoli <- data_ecoli[data_ecoli$Class %in% class$Var1[class$Freq>=6],]
+
+```
+
+Q 2.1)
+```{r}
+knn()
+
+```
