@@ -14,7 +14,7 @@ knitr::opts_chunk$set(warning = FALSE)
 library('GA')
 ```
 
-
+#1
 ## 1.1
 
 The database has 8 attributes :
@@ -40,4 +40,40 @@ The class is the localisation site which can be :
 8. pp: periplasm
 
 
+## 1.2
 
+```{r}
+data_ecoli = read.table("ecoli.data",header = FALSE, sep = "")
+names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2', 'Class')
+```
+
+```{r}
+print(data_ecoli)
+```
+
+```{r}
+
+```
+
+#2
+##2.1
+
+```{r}
+library('class')
+
+kdist <- knn.dist(df_train)
+preds <- knn.pred(df_train,df_test,y, kdist,k=10, agg.meth="majority")
+preds
+
+```
+
+##2.2
+
+```{r}
+library('evclass')
+
+EkNN <- EkNNfit(x = x_train, y = y_train, K = 10,)
+preds <- EkNNval(xtrain, ytrain, xtest, K = 10, ytest = NULL)
+
+
+```
