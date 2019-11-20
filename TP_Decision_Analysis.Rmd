@@ -1,0 +1,108 @@
+---
+title: "TP_Decision_Theory"
+author: "Stéfan Baudier"
+date: "11/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, Importation des librairies}
+
+library(GA)
+
+```
+
+```{r, tests}
+
+data<-data.frame(F1=c(1,4,7),m1=c(0.5,0.4,0.1))
+print(data)
+
+```
+
+# Définition de Fonctions
+```{r}
+Belief <- function (A, data)
+{
+  belief = 0
+  l = nrow (data)
+  for (i in 1:l)
+  {
+    inter = decimal2binary(A,3) & decimal2binary(data[i,'F1'],3)
+    if (binary2decimal(inter) == data[i,'F1'])
+    {
+      belief = belief + data[i,'m1']
+    }
+  }
+  return(belief)
+}
+```
+
+
+```{r}
+
+Plausibility <- function (A, data)
+{
+  plausibility = 0
+  l = nrow (data)
+  for (i in 1:l)
+  {
+    inter = decimal2binary(A,3) & decimal2binary(data[i,'F1'],3)
+    if (binary2decimal(inter) != 0)
+    {
+      plausibility = plausibility + data[i,'m1']
+    }
+  }
+  return(plausibility)
+}
+
+```
+
+```{r}
+Pignistic <- function (theta, data)
+{
+  pignistic = 0
+  l = nrow (data)
+  for (i in 1:l)
+  {
+    inter = decimal2binary(theta,3) & decimal2binary(data[i,'F1'],3)
+    if (binary2decimal(inter) != 0)
+    {
+      pignistic = pignistic + data[i,'m1']/sum(decimal2binary(data[i,'F1'],3))
+    }
+  }
+  return(pignistic)
+}
+```
+
+
+#Tests et corps du programme
+```{r}
+for(i in 0:7)
+{
+  print(paste('la valeur de Belief pour',i, 'est:',Belief(i,data)))
+  print(paste('la valeur de Plausibility pour',i, 'est:',Plausibility(i,data)))
+
+}
+```
+```{r}
+for (i in 2^((1:3)-1))
+      {
+        print(paste('la valeur de Pignistic pour',i, 'est:',Pignistic(i, data)))
+      }
+```
+ 
+TP
+
+```{r}
+
+data_ecoli = read.table("ecoli.data",header = FALSE, sep = "")
+names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2', 'Class')
+```
+
+```{r}
+print(data_ecoli)
+```
+
