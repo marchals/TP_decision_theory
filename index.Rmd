@@ -1,0 +1,43 @@
+---
+title: "TP_Decision_Theory"
+author: "Arnaud Frering"
+date: "20/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r,}
+library('GA')
+```
+
+
+## 1.1
+
+The database has 8 attributes :
+
+1. Sequence Name: Accession number for the SWISS-PROT database
+2. mcg: McGeoch's method for signal sequence recognition.
+3. gvh: von Heijne's method for signal sequence recognition.
+4. lip: von Heijne's Signal Peptidase II consensus sequence score. Binary attribute.
+5. chg: Presence of charge on N-terminus of predicted lipoproteins. Binary attribute.
+6. aac: score of discriminant analysis of the amino acid content of outer membrane and periplasmic proteins.
+7. alm1: score of the ALOM membrane spanning region prediction program.
+8. alm2: score of ALOM program after excluding putative cleavable signal regions from the sequence.
+
+The class is the localisation site which can be :
+
+1. cp: cytoplasm
+2. im: inner membrane without signal sequence
+3. imS: inner membrane, cleavable signal sequence
+4. imL: inner membrane lipoprotein
+5. imU: inner membrane, uncleavable signal sequence
+6. om: outer membrane
+7. omL: outer membrane lipoprotein
+8. pp: periplasm
+
+
+
