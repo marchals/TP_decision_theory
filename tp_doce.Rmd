@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library("GA")
 library("class")
+library("evclass")
 ```
 
 Q 1.1)
@@ -22,10 +23,27 @@ names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1'
 class <- as.data.frame(table(data_ecoli$Class))
 data_ecoli <- data_ecoli[data_ecoli$Class %in% class$Var1[class$Freq>=6],]
 
+index_train <- rep(c(T,F), length.out=327)
+train_data <- data_ecoli[which(index_train), 2:8]
+test_data <- data_ecoli[which(!index_train),2:8]
+train_labels <- data_ecoli[which(index_train), 9]
+test_labels <- data_ecoli[which(!index_train), 9]
 ```
 
 Q 2.1)
 ```{r}
-knn()
+Ypred <- knn(train_data, test_data, cl=train_labels, k=10)
+
+conf_matrix <- table(Ypred, test_labels)
+
+accuracy <- function(confusion_matrix){sum(diag(confusion_matrix)/(sum(rowSums(confusion_matrix)))) * 100}
+acc_knn <- accuracy(conf_matrix)
+```
+
+Q 2.2)
+```{r}
+#init <- EkNNinit(train_data, train_labels, alpha = 0.95)
+fit <- EkNNfit(train_data, train_labels, K=10)    # comprend pas pk ca bug 
+EvYpred <- EkNNval(train_data, train_labels, test_data, 10, test_labels, fit$param)
 
 ```
