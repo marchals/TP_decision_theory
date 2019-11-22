@@ -42,8 +42,14 @@ acc_knn <- accuracy(conf_matrix)
 
 Q 2.2)
 ```{r}
-#init <- EkNNinit(train_data, train_labels, alpha = 0.95)
-fit <- EkNNfit(train_data, train_labels, K=10)    # comprend pas pk ca bug 
-EvYpred <- EkNNval(train_data, train_labels, test_data, 10, test_labels, fit$param)
+init <- EkNNinit(train_data, train_labels)
+
+train_labels_matrix <- as.matrix(train_labels)
+fit <- EkNNfit(train_data, train_labels_matrix, K=10)
+EvYpred <- EkNNval(train_data, train_labels_matrix, test_data, 10, test_labels, fit$param)
+M1 <- EvYpred$m
+```
+
+```{r}
 
 ```
