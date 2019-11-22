@@ -14,6 +14,28 @@ library("evclass")
 
 Q 1.1)
 
+The database has 8 attributes :
+
+1. Sequence Name: Accession number for the SWISS-PROT database
+2. mcg: McGeoch's method for signal sequence recognition.
+3. gvh: von Heijne's method for signal sequence recognition.
+4. lip: von Heijne's Signal Peptidase II consensus sequence score. Binary attribute.
+5. chg: Presence of charge on N-terminus of predicted lipoproteins. Binary attribute.
+6. aac: score of discriminant analysis of the amino acid content of outer membrane and periplasmic proteins.
+7. alm1: score of the ALOM membrane spanning region prediction program.
+8. alm2: score of ALOM program after excluding putative cleavable signal regions from the sequence.
+
+The class is the localisation site which can be :
+
+1. cp: cytoplasm
+2. im: inner membrane without signal sequence
+3. imS: inner membrane, cleavable signal sequence
+4. imL: inner membrane lipoprotein
+5. imU: inner membrane, uncleavable signal sequence
+6. om: outer membrane
+7. omL: outer membrane lipoprotein
+8. pp: periplasm
+
 Q 1.2)
 ```{r}
 
@@ -22,6 +44,8 @@ names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1'
 
 class <- as.data.frame(table(data_ecoli$Class))
 data_ecoli <- data_ecoli[data_ecoli$Class %in% class$Var1[class$Freq>=6],]
+
+data_ecoli <- droplevels(data_ecoli)
 
 index_train <- rep(c(T,F), length.out=327)
 train_data <- data_ecoli[which(index_train), 2:8]
@@ -42,14 +66,82 @@ acc_knn <- accuracy(conf_matrix)
 
 Q 2.2)
 ```{r}
-init <- EkNNinit(train_data, train_labels)
+
 
 train_labels_matrix <- as.matrix(train_labels)
+test_labels_matrix <- as.matrix(test_labels)
 fit <- EkNNfit(train_data, train_labels_matrix, K=10)
-EvYpred <- EkNNval(train_data, train_labels_matrix, test_data, 10, test_labels, fit$param)
+EvYpred <- EkNNval(train_data, train_labels_matrix, test_data, 10, test_labels_matrix, fit$param)
 M1 <- EvYpred$m
 ```
 
+Q 2.4)
 ```{r}
-
+conf_matrix <- table(EvYpred$ypred, test_labels)
+acc_Eknn <- accuracy(conf_matrix)
+print(paste("knn accuracy : ", acc_knn, "%"))
+print(paste("Evidential knn accuracy : ", acc_Eknn,"%"))
 ```
+
+Q 2.5)
+```{r}
+load("M2")
+```
+
+Q 3.1)
+```{r}
+#Definition de la loss function avec beta = 1
+Loss<-function(A, theta){
+  resultat = 1
+  elements_A = sum(decimal2binary(A))
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(A,20))!=0){
+    resultat = 1 - (2/(1+elements_A))
+  }
+  resultat #la fonction retourne le résultat
+}
+```
+
+```{r}
+# Initialisation de la matrice de loss
+nb_classes = 5
+nb_sous_ensembles = 2^nb_classes -1
+LOSS <- matrix(rep(c(0),nb_classes*nb_sous_ensembles), nb_sous_ensembles,nb_classes)
+for (i in 1:nb_classes){
+  for (j in 1:nb_sous_ensembles){
+    LOSS[j,i] = Loss(A = j, theta = i)
+  }
+  }
+```
+
+```{r}
+library(plot.matrix)
+plot(LOSS)
+```
+
+Q 3.2)
+```{r}
+risk <- function(A){
+  res <- 0
+  for(b in 1:nrow(LOSS)){
+    mass <- M2[b]
+    loss_list <- c(0)
+    for(theta in 1:5){
+      if(binary2decimal(decimal2binary(theta, length = 5) & decimal2binary(b, length =5)) != 0){
+        loss_list <- c(loss_list, LOSS[A,theta])
+      }
+    }
+    max_loss <- max(loss_list)
+    res <- res + (mass * max_loss)
+  }
+  res
+}
+
+cautious_prediction <- c()
+for (a in 1:nrow(LOSS)){
+  cautious_prediction <- c(cautious_prediction, risk(a))
+}
+cautious_prediction
+```
+
+
+
