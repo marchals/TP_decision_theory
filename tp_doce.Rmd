@@ -136,10 +136,15 @@ risk <- function(A){
   res
 }
 
-cautious_prediction <- c()
-for (a in 1:nrow(LOSS)){
-  cautious_prediction <- c(cautious_prediction, risk(a))
+compute_cautious_prediction <- function(){
+  cautious_prediction <- c()
+  for (a in 1:nrow(LOSS)){
+    cautious_prediction <- c(cautious_prediction, risk(a))
+  }
+  cautious_prediction
 }
+
+cautious_prediction <- compute_cautious_prediction()
 cautious_prediction
 ```
 
