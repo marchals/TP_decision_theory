@@ -51,8 +51,14 @@ names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1'
 print(data_ecoli)
 ```
 
-```{r}
-
+```{r,}
+class <- as.data.frame(table(data_ecoli$Class))
+data_ecoli <- data_ecoli[data_ecoli$Class %in% class$Var1[class$Freq>=6],]
+index_train <- rep(c(T,F), length.out=327)
+train_data <- data_ecoli[which(index_train), 2:8]
+test_data <- data_ecoli[which(!index_train),2:8]
+train_labels <- data_ecoli[which(index_train), 9]
+test_labels <- data_ecoli[which(!index_train), 9]
 ```
 
 #2
@@ -61,9 +67,12 @@ print(data_ecoli)
 ```{r}
 library('class')
 
-kdist <- knn.dist(df_train)
-preds <- knn.pred(df_train,df_test,y, kdist,k=10, agg.meth="majority")
-preds
+Ypred <- knn(train_data, test_data, cl=train_labels, k=10)
+conf_matrix <- table(Ypred, test_labels)
+accuracy <- function(confusion_matrix){sum(diag(confusion_matrix)/(sum(rowSums(confusion_matrix)))) * 100}
+acc_knn <- accuracy(conf_matrix)
+
+print(acc_knn)
 
 ```
 
@@ -72,8 +81,50 @@ preds
 ```{r}
 library('evclass')
 
-EkNN <- EkNNfit(x = x_train, y = y_train, K = 10,)
-preds <- EkNNval(xtrain, ytrain, xtest, K = 10, ytest = NULL)
+init <- EkNNinit(train_data, train_labels)
+train_labels_matrix <- as.matrix(train_labels)
+fit <- EkNNfit(train_data, train_labels_matrix, K=10)
+EvYpred <- EkNNval(train_data, train_labels_matrix, test_data, 10, test_labels, fit$param)
+M1 <- EvYpred$m
+```
+```{r}
 
+print(M1)
 
 ```
+
+#3
+##3.1
+```{r}
+#Definition de la loss function avec beta = 1
+
+Loss<-function(A, theta){
+  resultat = 1
+  elements_A = sum(decimal2binary(A))
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(A,20))!=0){
+    resultat = 1 - (2/(1+elements_A))
+  }
+  resultat #la fonction retourne le résultat
+}
+
+```
+
+```{r}
+# Initialisation de la matrice de loss
+nb_classes = 5
+nb_sous_ensembles = 2^nb_classes -1
+
+LOSS <- matrix(rep(c(0),nb_classes*nb_sous_ensembles), nb_sous_ensembles,nb_classes)
+
+for (i in 1:nb_classes){
+  for (j in 1:nb_sous_ensembles){
+    LOSS[j,i] = Loss(A = j, theta = i)
+  }
+  }
+```
+
+```{r}
+print(LOSS)
+
+```
+
