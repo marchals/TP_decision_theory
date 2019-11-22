@@ -12,7 +12,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, Importation des librairies}
 
 library(GA)
-
+library(evclass)
+library(class)
+library(plot.matrix)
+library(ggplot2) 
+library(dplyr)
+library(tidyr)
 ```
 
 ```{r, tests}
@@ -96,48 +101,272 @@ for (i in 2^((1:3)-1))
  
 #TP
 
-```{r}
+Q 1.1)
+The database has 8 attributes :
 
+1. Sequence Name: Accession number for the SWISS-PROT database
+2. mcg: McGeoch's method for signal sequence recognition.
+3. gvh: von Heijne's method for signal sequence recognition.
+4. lip: von Heijne's Signal Peptidase II consensus sequence score. Binary attribute.
+5. chg: Presence of charge on N-terminus of predicted lipoproteins. Binary attribute.
+6. aac: score of discriminant analysis of the amino acid content of outer membrane and periplasmic proteins.
+7. alm1: score of the ALOM membrane spanning region prediction program.
+8. alm2: score of ALOM program after excluding putative cleavable signal regions from the sequence.
+
+The class is the localisation site which can be :
+
+1. cp: cytoplasm
+2. im: inner membrane without signal sequence
+3. imS: inner membrane, cleavable signal sequence
+4. imL: inner membrane lipoprotein
+5. imU: inner membrane, uncleavable signal sequence
+6. om: outer membrane
+7. omL: outer membrane lipoprotein
+8. pp: periplasm
+
+Q 1.2)
+```{r}
 data_ecoli = read.table("ecoli.data",header = FALSE, sep = "")
 names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2', 'Class')
+
+class <- as.data.frame(table(data_ecoli$Class))
+data_ecoli <- data_ecoli[data_ecoli$Class %in% class$Var1[class$Freq>=6],]
+data_ecoli <- droplevels(data_ecoli)
+
+index_train <- rep(c(TRUE,FALSE), length.out=327)
+
+train_data <- data_ecoli[which(index_train), 2:8]
+test_data <- data_ecoli[which(!index_train),2:8]
+train_labels <- data_ecoli[which(index_train), 9]
+test_labels <- data_ecoli[which(!index_train), 9]
 ```
 
-```{r}
-classes = unique(data_ecoli$Class)
-nb_by_classes = rep(0, length(classes))
 
-for ( i in 1:length(classes))
-{
-  s = sum(data_ecoli$Class==classes[i])
-  nb_by_classes[i] = s
+Q 2.1)
+```{r}
+Ypred <- knn(train_data, test_data, cl=train_labels, k=10)
+conf_matrix <- table(Ypred, test_labels)
+accuracy <- function(confusion_matrix){sum(diag(confusion_matrix)/(sum(rowSums(confusion_matrix)))) * 100}
+acc_knn <- round(accuracy(conf_matrix),2)
+print(paste('La précision est de', acc_knn,'%'))
+```
+
+Q 2.2)
+```{r}
+mat_train_data = as.matrix(train_data)
+mat_train_labels = as.matrix(train_labels)
+mat_test_labels = as.matrix(test_labels)
+
+init <- EkNNinit(mat_train_data, mat_train_labels, alpha = 0.95)
+fit <- EkNNfit(mat_train_data, mat_train_labels, K=10)
+EvYpred <- EkNNval(mat_train_data, mat_train_labels, test_data, 10, mat_test_labels, fit$param)
+
+M1 = EvYpred$m
+```
+Q 2.3)
+```{r}
+head(M1)
+```
+
+On observe que seuls les masses des singletons et du sous ensemble composé de tous les singletons sont donnés par cette méthode.
+
+Q 2.4)
+
+```{r}
+conf_matrix = table(EvYpred$ypred, test_labels)
+acc_Eknn = accuracy(conf_matrix)
+
+print(paste('La précision de knn est de', acc_knn,'%'))
+print(paste('La précision de Eknn est de', acc_Eknn,'%'))
+```
+On observe que la méthode evidential knn est plus précise
+
+Q 2.5)
+```{r}
+load("M2.mds")
+head(M2)
+```
+La matrice de masse M2 contient les masses des singletons et de tous les sous ensembles de l'univers correspondant.
+
+Q 3.1)
+
+```{r}
+#Definition de la loss function avec beta = 1
+Loss<-function(A, theta, beta){
+  resultat = 1
+  elements_A = sum(decimal2binary(A))
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(A,20))!=0){
+    resultat = 1 - ((1+beta^2)/((beta^2)+elements_A))
+  }
+  resultat #la fonction retourne le résultat
 }
-data_class_descr<-data.frame(classe=classes,nombre=nb_by_classes)
 ```
 ```{r}
-print(data_class_descr)
+# Initialisation de la matrice de loss
+mat_loss_init<-function(beta)
+{
+  nb_classes = 5
+  nb_sous_ensembles = 2^nb_classes -1
+  mat_loss <- matrix(rep(c(0),nb_classes*nb_sous_ensembles), nb_sous_ensembles,nb_classes)
+  for (i in 1:nb_classes){
+    for (j in 1:nb_sous_ensembles){
+      mat_loss[j,i] = Loss(A = j, theta = i, beta = beta)
+    }
+  }
+  return(mat_loss)
+}
+```
+```{r}
+mat_loss = mat_loss_init(beta = 1)
+plot(mat_loss)
+```
+Q 3.2)
+```{r}
+risk <- function(A, m, mat_loss){
+  res <- 0
+  for(b in 1:nrow(mat_loss)){
+    mass <- m[b]
+    loss_list <- c(0)
+    for(theta in 1:5){
+      if(binary2decimal(decimal2binary(theta, length = 5) & decimal2binary(b, length =5)) != 0){
+        loss_list <- c(loss_list, mat_loss[A,theta])
+      }
+    }
+    max_loss <- max(loss_list)
+    res <- res + (mass * max_loss)
+  }
+  res
+}
+compute_cautious_prediction <- function(mat_loss, M2){
+  mat_risk <- c()
+  for(ex in 1:nrow(M2)){
+    cautious_prediction <- c()
+    for (a in 1:nrow(mat_loss)){
+      cautious_prediction <- c(cautious_prediction, risk(a, M2[ex,], mat_loss))
+    }
+    mat_risk <- c(mat_risk, cautious_prediction)
+  }
+  mat_risk <- matrix(mat_risk, nrow(M2), ncol(M2), TRUE)
+  return(as.data.frame(mat_risk))
+}
+
+compute_predictions <- function(mat_loss,M2){
+  cautious_predictions <- c()
+  cautious_prediction_matrix <- compute_cautious_prediction(mat_loss, M2)
+  for(i in 1:nrow(cautious_prediction_matrix)){
+    line <- cautious_prediction_matrix[i,]
+    cautious_predictions <- c(cautious_predictions, unname(which.min(line)))
+  }
+  cautious_predictions
+}
+
+
+cautious_predictions <- compute_predictions(mat_loss,M2 )
+cautious_predictions
+```
+```{r}
+print(cautious_prediction_matrix)
+```
+
+Q 4.1)
+
+```{r}
+levels = levels(test_labels)
+list_classes_number = seq(1,5)
+names(list_classes_number) = levels
+test_labels_number = rep(0,length(test_labels))
+for (i in 1:length(test_labels))
+{
+  test_labels_number[i] = list_classes_number[test_labels[i]]
+  test_labels_number[i] = 2^(test_labels_number[i]-1)
+}
+
+print(test_labels_number)
 ```
 
 ```{r}
-for (i in 1:nrow(data_ecoli))
+corr<- function (delta, theta) 
+  {
+  resultat = 0
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(delta,20))!=0)
+    {
+    resultat = 1
+    }
+  return(resultat)
+  }
+
+rel<- function(delta, theta)
+  {
+  resultat = 0
+  elements_delta = sum(decimal2binary(delta))
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(delta,20))!=0)
+    {
+    resultat = 1/elements_delta
+    }
+  return(resultat)
+  }
+
+```
+
+```{r}
+av_corr<-function (predictions, labels)
 {
-  class = data_ecoli[i, 'Class']
+  list_corr = rep(0, length(predictions))
+  for (i in 1:length(predictions))
+  {
+    list_corr[i] = Corr(predictions[i],labels[i])
+  }
+  return(mean(list_corr))
+}
+
+av_rel<-function (predictions, labels)
+{
+  list_rel = rep(0, length(predictions))
+
+  for (i in 1:length(predictions))
+  {
+    list_rel[i] = rel(predictions[i],labels[i])
+  }
   
-  if (data_class_descr[data_class_descr['classe'] == class, 'nombre'] < 6)
-    data_ecoli$bons = FALSE
-  else
-    data_ecoli$bons = TRUE
+  return(mean(list_rel))
 }
 ```
 
 ```{r}
-data_class_descr['classe']==class
-```
-```{r}
-data_class_descr[data_class_descr['classe'] == 'cp']
-```
-```{r}
-data_ecoli[2, 'Class'] == 'cp' 
+print(av_corr(cautious_predictions, test_labels_number))
+print(av_rel(cautious_predictions, test_labels_number))
 ```
 
+
+Q 4.2)
+
+```{r}
+n_beta = 3
+list_corr = rep(0, n_beta)
+list_rel = rep(0, n_beta)
+for (beta in 1:n_beta)
+{
+  mat_loss = mat_loss_init(beta = beta)
+  predictions = compute_predictions(mat_loss, M2)
+  list_corr[beta] = av_corr(predictions, test_labels_number)
+  list_rel[beta] = av_rel(predictions, test_labels_number)
+  print(paste('les calculs pour beta =',beta,'sont effectués'))
+}
+```
+```{r}
+data_accuracy<-data.frame(Beta = 1:length(list_corr), Corectness=list_corr, Relevance=list_rel)
+print(data_accuracy)
+```
+```{r}
+data_accuracy %>%
+  ggplot() +
+  geom_point(aes(Beta,Relevance),color = 'blue')+
+  geom_point(aes(Beta,Corectness),color = 'red')+
+  labs(x = "Beta", y="Corectness and Relevance")+
+  annotate(geom = "text", x = 2, y = 0.73, label = "Corectness", color = 'red')+
+  annotate(geom = "text", x = 2, y = 0.66, label = "Relevance", color = 'blue')
+```
+
+The more beta is high, the more the Relevance decreases and the more the Corectness increases.
 
 
