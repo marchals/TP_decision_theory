@@ -124,7 +124,15 @@ for (i in 1:nb_classes){
 ```
 
 ```{r}
-print(LOSS)
+library(plot.matrix)
+plot(LOSS)
 
+```
+
+##3.2
+
+```{r}
+load("M2")
+print(M2)
 ```
 
