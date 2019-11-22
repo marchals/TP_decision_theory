@@ -157,7 +157,46 @@ Rel<- function(delta, theta){
 }
 ```
 
-```{r}
 
+##5
+#5.1
+```{r}
+dempster.comb<- function(m1, m2){
+  n1 = length(m1)
+  n2 = length(m2)
+  grand_theta = max(n1,n2)
+  m1n2 = c(rep(0,grand_theta))
+  somme_vide = 0
+  for (i in 1:n1){
+    for (j in 1:n2){
+      if (binary2decimal(decimal2binary(i,20) & decimal2binary(j,20))==0){
+        somme_vide = somme_vide + (m1[i]*m2[j])
+      }
+    }
+  }
+  kappa = 1/(1-somme_vide)
+  
+  for(k in 1:grand_theta){
+    somme_k = 0
+    for (i in 1:n1){
+      for (j in 1:n2){
+        if (binary2decimal(decimal2binary(i,20) & decimal2binary(j,20))==k){
+        somme_k = somme_k + (m1[i]*m2[j])
+        }
+      }
+    }
+    m1n2[k] = kappa*somme_k
+  }
+  
+  m1n2
+}
 ```
+
+```{r}
+m1 = c(0.5, 0, 0, 0.4, 0, 0, 0.1)
+m2 = c(0, 0, 0, 0.5, 0.6, 0, 0)
+dempster.comb(m1, m2)
+```
+
+
 
