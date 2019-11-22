@@ -120,10 +120,10 @@ plot(LOSS)
 
 Q 3.2)
 ```{r}
-risk <- function(A){
+risk <- function(A, m){
   res <- 0
   for(b in 1:nrow(LOSS)){
-    mass <- M2[b]
+    mass <- m[b]
     loss_list <- c(0)
     for(theta in 1:5){
       if(binary2decimal(decimal2binary(theta, length = 5) & decimal2binary(b, length =5)) != 0){
@@ -137,15 +137,32 @@ risk <- function(A){
 }
 
 compute_cautious_prediction <- function(){
-  cautious_prediction <- c()
-  for (a in 1:nrow(LOSS)){
-    cautious_prediction <- c(cautious_prediction, risk(a))
+  mat_risk <- c()
+  for(ex in 1:nrow(M2)){
+    cautious_prediction <- c()
+    for (a in 1:nrow(LOSS)){
+      cautious_prediction <- c(cautious_prediction, risk(a, M2[ex,]))
+    }
+    mat_risk <- c(mat_risk, cautious_prediction)
   }
-  cautious_prediction
+  mat_risk <- matrix(mat_risk, nrow(M2), ncol(M2), TRUE)
+  return(as.data.frame(mat_risk))
 }
 
-cautious_prediction <- compute_cautious_prediction()
-cautious_prediction
+
+
+cautious_prediction_matrix <- compute_cautious_prediction()
+
+compute_predictions <- function(){
+  cautious_predictions <- c()
+  for(i in 1:nrow(cautious_prediction_matrix)){
+    line <- cautious_prediction_matrix[i,]
+    cautious_predictions <- c(predictions, unname(which.min(line)))
+  }
+  cautious_predictions
+}
+cautious_predictions <- compute_predictions()
+cautious_predictions
 ```
 
 
