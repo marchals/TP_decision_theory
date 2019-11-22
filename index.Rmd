@@ -98,11 +98,11 @@ print(M1)
 ```{r}
 #Definition de la loss function avec beta = 1
 
-Loss<-function(A, theta){
+Loss<-function(A, theta, beta=1){
   resultat = 1
   elements_A = sum(decimal2binary(A))
   if (binary2decimal(decimal2binary(theta,20) & decimal2binary(A,20))!=0){
-    resultat = 1 - (2/(1+elements_A))
+    resultat = 1 - ((1+beta^2)/((beta^2)+elements_A))
   }
   resultat #la fonction retourne le résultat
 }
@@ -133,6 +133,31 @@ plot(LOSS)
 
 ```{r}
 load("M2")
-print(M2)
+
+```
+
+##4
+#4.1
+
+```{r}
+Corr<- function (delta, theta) {
+  resultat = 0
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(delta,20))!=0){
+    resultat = 1
+  }
+  resultat
+}
+
+Rel<- function(delta, theta){
+  resultat = 0
+  elements_delta = sum(decimal2binary(delta))
+  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(delta,20))!=0){
+    resultat = 1/elements_delta
+  }
+}
+```
+
+```{r}
+
 ```
 
