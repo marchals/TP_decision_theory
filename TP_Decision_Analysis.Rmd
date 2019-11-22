@@ -94,7 +94,7 @@ for (i in 2^((1:3)-1))
       }
 ```
  
-TP
+#TP
 
 ```{r}
 
@@ -103,6 +103,41 @@ names(data_ecoli) = c('Sequence Name', 'mcg', 'gvh', 'lip', 'chg', 'aac', 'alm1'
 ```
 
 ```{r}
-print(data_ecoli)
+classes = unique(data_ecoli$Class)
+nb_by_classes = rep(0, length(classes))
+
+for ( i in 1:length(classes))
+{
+  s = sum(data_ecoli$Class==classes[i])
+  nb_by_classes[i] = s
+}
+data_class_descr<-data.frame(classe=classes,nombre=nb_by_classes)
 ```
+```{r}
+print(data_class_descr)
+```
+
+```{r}
+for (i in 1:nrow(data_ecoli))
+{
+  class = data_ecoli[i, 'Class']
+  
+  if (data_class_descr[data_class_descr['classe'] == class, 'nombre'] < 6)
+    data_ecoli$bons = FALSE
+  else
+    data_ecoli$bons = TRUE
+}
+```
+
+```{r}
+data_class_descr['classe']==class
+```
+```{r}
+data_class_descr[data_class_descr['classe'] == 'cp']
+```
+```{r}
+data_ecoli[2, 'Class'] == 'cp' 
+```
+
+
 
