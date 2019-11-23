@@ -91,11 +91,11 @@ load("M2")
 Q 3.1)
 ```{r}
 #Definition de la loss function avec beta = 1
-Loss<-function(A, theta){
+Loss<-function(A, theta, beta){
   resultat = 1
   elements_A = sum(decimal2binary(A))
-  if (binary2decimal(decimal2binary(theta,20) & decimal2binary(A,20))!=0){
-    resultat = 1 - (2/(1+elements_A))
+  if (binary2decimal(decimal2binary(theta,5) & decimal2binary(A,5)) != 0){
+    resultat = 1 - ((1 + beta^2) / (beta^2 + elements_A))
   }
   resultat #la fonction retourne le résultat
 }
@@ -105,12 +105,12 @@ Loss<-function(A, theta){
 # Initialisation de la matrice de loss
 nb_classes = 5
 nb_sous_ensembles = 2^nb_classes -1
-LOSS <- matrix(rep(c(0),nb_classes*nb_sous_ensembles), nb_sous_ensembles,nb_classes)
+LOSS <- matrix(rep(c(0), nb_classes * nb_sous_ensembles), nb_sous_ensembles, nb_classes)
 for (i in 1:nb_classes){
   for (j in 1:nb_sous_ensembles){
-    LOSS[j,i] = Loss(A = j, theta = i)
+    LOSS[j, i] = Loss(A = j, theta = i, beta = 1)
   }
-  }
+}
 ```
 
 ```{r}
@@ -136,33 +136,31 @@ risk <- function(A, m){
   res
 }
 
-compute_cautious_prediction <- function(){
-  mat_risk <- c()
-  for(ex in 1:nrow(M2)){
-    cautious_prediction <- c()
-    for (a in 1:nrow(LOSS)){
-      cautious_prediction <- c(cautious_prediction, risk(a, M2[ex,]))
-    }
-    mat_risk <- c(mat_risk, cautious_prediction)
+get_prediction <- function(m){
+  cautious_prediction <- c()
+  for(a in 1:nrow(LOSS)){
+    cautious_prediction <- c(cautious_prediction, risk(a, m))
   }
-  mat_risk <- matrix(mat_risk, nrow(M2), ncol(M2), TRUE)
-  return(as.data.frame(mat_risk))
+  return(unname(which.min(cautious_prediction)))
 }
 
-
-
-cautious_prediction_matrix <- compute_cautious_prediction()
-
-compute_predictions <- function(){
-  cautious_predictions <- c()
-  for(i in 1:nrow(cautious_prediction_matrix)){
-    line <- cautious_prediction_matrix[i,]
-    cautious_predictions <- c(predictions, unname(which.min(line)))
+compute_predictions <- function(M){
+  predictions <- c()
+  for(i in 1:nrow(M)){
+    pred <- get_prediction(M[i, ])
+    predictions <- c(predictions, pred)
   }
-  cautious_predictions
+  predictions
 }
-cautious_predictions <- compute_predictions()
+
+cautious_predictions <- compute_predictions(M2)
 cautious_predictions
+
+# for (i in 1:length(cautious_prediction)){
+#   if(cautious[i] != 1 && cautious[i] != 2 && cautious[i] != 4 && cautious[i] != 8 && cautious[i] != 16){
+#     #compter les fois ou on prédit des sous ensembles hors singletons
+#   }
+# }
 ```
 
 
