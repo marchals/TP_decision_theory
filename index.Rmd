@@ -133,7 +133,7 @@ plot(LOSS)
 
 ```{r}
 load("M2")
-
+print(M2)
 ```
 
 ##4
@@ -227,3 +227,36 @@ m1 = c(0.5, 0, 0, 0.4, 0, 0, 0.1)
 m2 = c(0, 0, 0, 0.4, 0.6, 0, 0)
 disjonctive.comb(m1, m2)
 ```
+
+#5.3
+
+```{r}
+nb_exemples = length(M1[,1])
+nb_sous_ensembles = 31
+
+M12conj <- matrix(rep(c(0),nb_exemples*nb_sous_ensembles), nb_exemples,nb_sous_ensembles)
+M12disj <- matrix(rep(c(0),nb_exemples*nb_sous_ensembles), nb_exemples,nb_sous_ensembles)
+
+for (i in 1:nb_exemples){
+  M1_natural_order = c(rep(0,31))
+  M1_natural_order[1] = M1[i,1]
+  M1_natural_order[2] = M1[i,2]
+  M1_natural_order[4] = M1[i,3]
+  M1_natural_order[8] = M1[i,4]
+  M1_natural_order[16] = M1[i,5]
+  M1_natural_order[31] = M1[i,6]
+  M12conj[i,] = dempster.comb(M1_natural_order, M2[i,])
+  M12disj[i,] = disjonctive.comb(M1_natural_order, M2[i,])
+}
+
+```
+
+
+```{r}
+print(M12conj[1:10,])
+```
+
+```{r}
+print(M12disj[1:10,])
+```
+
