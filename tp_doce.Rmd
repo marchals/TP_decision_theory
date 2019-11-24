@@ -154,13 +154,15 @@ compute_predictions <- function(M){
 }
 
 cautious_predictions <- compute_predictions(M2)
-cautious_predictions
+nb_predictions <- as.data.frame(table(cautious_predictions))
 
-# for (i in 1:length(cautious_prediction)){
-#   if(cautious[i] != 1 && cautious[i] != 2 && cautious[i] != 4 && cautious[i] != 8 && cautious[i] != 16){
-#     #compter les fois ou on prédit des sous ensembles hors singletons
-#   }
-# }
+# number of prediction per subset
+subset_pred <- nb_predictions[nb_predictions$cautious_predictions != 1 & nb_predictions$cautious_predictions != 2 & nb_predictions$cautious_predictions != 4 & nb_predictions$cautious_predictions != 8 & nb_predictions$cautious_predictions != 16, ]
+subset_pred
+
+# total number of subsets cautious predictions
+print("total number of subsets cautious predictions :")
+sum(subset_pred$Freq)
 ```
 
 
